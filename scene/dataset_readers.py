@@ -47,7 +47,12 @@ class SceneInfo(NamedTuple):
 
 def getNerfppNorm(cam_info):
     def get_center_and_diag(cam_centers):
-        cam_centers = np.hstack(cam_centers)
+        try:
+            cam_centers = np.hstack(cam_centers)
+        except ValueError as e:
+            print(f"ERROR WITHH np.hstack !!!!! cam_centers ({type(cam_centers)}) is {cam_centers}")
+            print(f"cam_info ({type(cam_info)}) is {cam_info}")
+            raise e
         avg_cam_center = np.mean(cam_centers, axis=1, keepdims=True)
         center = avg_cam_center
         dist = np.linalg.norm(cam_centers - center, axis=0, keepdims=True)
@@ -200,7 +205,18 @@ def readColmapSceneInfo(path, images, depths, eval, train_test_exp, llffhold=8):
     train_cam_infos = [c for c in cam_infos if train_test_exp or not c.is_test]
     test_cam_infos = [c for c in cam_infos if c.is_test]
 
-    nerf_normalization = getNerfppNorm(train_cam_infos)
+    try:
+        nerf_normalization = getNerfppNorm(train_cam_infos)
+    except ValueError as e:
+        print(f"[readColmapSceneInfo] ERROR! reading_dir    ({type(reading_dir)         }) is {reading_dir}")
+        print(f"[readColmapSceneInfo] ERROR! images_folder  ({type(os.path.join(path, reading_dir))}) is {os.path.join(path, reading_dir)}")
+        print(f"[readColmapSceneInfo] ERROR! cam_extrinsics ({type(cam_extrinsics)      }) is {cam_extrinsics}")
+        print(f"[readColmapSceneInfo] ERROR! cam_intrinsicsics  ({type(cam_intrinsics)  }) is {cam_intrinsics}")
+        print(f"[readColmapSceneInfo] ERROR! depths_params      ({type(depths_params)   }) is {depths_params}")
+        print(f"[readColmapSceneInfo] ERROR! cam_infos_unsorted ({type(cam_infos_unsorted)}) is {cam_infos_unsorted}")
+        print(f"[readColmapSceneInfo] ERROR! cam_infos ({type(cam_infos)}) is {cam_infos}")
+        print(f"[readColmapSceneInfo] ERROR! train_cam_infos ({type(train_cam_infos)}) is {train_cam_infos}")
+        raise e
 
     ply_path = os.path.join(path, "sparse/0/points3D.ply")
     bin_path = os.path.join(path, "sparse/0/points3D.bin")
